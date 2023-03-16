@@ -104,18 +104,26 @@ create_midi() {
 	#       create_midi config/c.1 midi.0
 	CONFIG=$1
 	FUNCTION=$2
+	midinameshort="$3"
+	midinamelong="$4"
+	midiportsin="$5"
+	midiportsout="$6"
 
 	# MIDI
 	# https://www.kernel.org/doc/html/latest/usb/gadget-testing.html#midi-function
 	pwd
 	echo "	Creating MIDI gadget functionality : $FUNCTION"
 	mkdir -p functions/$FUNCTION
-	echo "pi" > functions/$FUNCTION/id
+	echo "PiMIDI" > functions/$FUNCTION/id
 	#echo "1" > functions/$FUNCTION/index
 	echo "1" > functions/$FUNCTION/in_ports
 	echo "1" > functions/$FUNCTION/out_ports
-	#echo "16" > functions/$FUNCTION/in_ports
-	#echo "16" > functions/$FUNCTION/out_ports
+	echo "$midinameshort" > functions/$FUNCTION/shortname
+	echo "$midinamelong" > functions/$FUNCTION/longname
+	#echo "f_midi" > functions/$FUNCTION/shortname
+	#echo "MIDI function" > functions/$FUNCTION/longname
+	echo "$midiportsin" > functions/$FUNCTION/in_ports
+	echo "$midiportsout" > functions/$FUNCTION/out_ports
 	ln -s functions/$FUNCTION configs/c.1
 	echo "\tOK"
 }
@@ -372,7 +380,7 @@ case "$1" in
 	#create_ecm configs/c.1 ecm.usb0
 	create_uac2 configs/c.1 uac2.usb0 "ASSound0" "ASSound0" "ASSound0" 27
 	create_uac2 configs/c.1 uac2.usb1 "ASSound1" "ASSound1" "ASSound1" 27
-	create_midi configs/c.1 midi.usb0
+	create_midi configs/c.1 midi.usb0 "Pi_MIDI" "Pi MIDI" 16 16
 	echo "OK"
 
 	echo "Binding USB Device Controller"

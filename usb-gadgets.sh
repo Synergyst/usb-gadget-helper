@@ -118,8 +118,8 @@ create_midi() {
 	#echo "1" > functions/$FUNCTION/index
 	echo "1" > functions/$FUNCTION/in_ports
 	echo "1" > functions/$FUNCTION/out_ports
-	echo "$midinameshort" > functions/$FUNCTION/shortname
-	echo "$midinamelong" > functions/$FUNCTION/longname
+	echo -n "$midinameshort" > functions/$FUNCTION/shortname
+	echo -n "$midinamelong" > functions/$FUNCTION/longname
 	#echo "f_midi" > functions/$FUNCTION/shortname
 	#echo "MIDI function" > functions/$FUNCTION/longname
 	echo "$midiportsin" > functions/$FUNCTION/in_ports

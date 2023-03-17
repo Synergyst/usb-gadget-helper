@@ -16,7 +16,7 @@ MANUF="Pawkow"
 PRODUCT="Raspberry Pi Gadget"
 #CONFIGURATION="ECM + UAC2 + UVC + MIDI"
 #CONFIGURATION="UAC2 + UVC + MIDI"
-CONFIGURATION="UAC2 x4 + MIDI"
+CONFIGURATION="UAC2 x2 + MIDI"
 #CONFIGURATION="UAC2"
 MAXPOWERMW=250
 
@@ -124,7 +124,7 @@ create_midi() {
 	#echo "MIDI function" > functions/$FUNCTION/longname
 	echo "$midiportsin" > functions/$FUNCTION/in_ports
 	echo "$midiportsout" > functions/$FUNCTION/out_ports
-	ln -s functions/$FUNCTION configs/c.1
+	ln -s functions/$FUNCTION $CONFIG
 	echo "\tOK"
 }
 
@@ -173,9 +173,9 @@ create_uac2() {
 	#echo `audio-gadget-helper 24|head -n1|cut -f5 -d' '` > functions/$FUNCTION/p_chmask
 	echo 2 > functions/$FUNCTION/c_ssize
 	echo 2 > functions/$FUNCTION/p_ssize
-	#echo 16 > functions/$FUNCTION/req_number
-	#echo 40 > functions/$FUNCTION/fb_max
-	ln -s functions/$FUNCTION configs/c.1
+	#echo 32 > functions/$FUNCTION/req_number
+	#echo 80 > functions/$FUNCTION/fb_max
+	ln -s functions/$FUNCTION $CONFIG
 	echo "\tOK"
 }
 
@@ -335,13 +335,13 @@ delete_uvc() {
 case "$1" in
     start)
 	echo "Creating the USB gadget"
-	#echo "Loading composite module"
-	#modprobe libcomposite
+	echo "Loading composite module"
+	modprobe libcomposite
 
-	echo "Creating gadget directory g1"
-	mkdir -p $GADGET/g1
+	echo "Creating gadget directory g_multi.0"
+	mkdir -p $GADGET/g_multi.0
 
-	cd $GADGET/g1
+	cd $GADGET/g_multi.0
 	if [ $? -ne 0 ]; then
 	    echo "Error creating usb gadget in configfs"
 	    exit 1;
@@ -359,7 +359,6 @@ case "$1" in
 	echo $SERIAL > strings/0x409/serialnumber
 	echo $MANUF > strings/0x409/manufacturer
 	echo $PRODUCT > strings/0x409/product
-	#echo $CONFIGURATION > strings/0x409/configuration
 	echo 0x0100 > bcdDevice
 	echo 0xEF > bDeviceClass
 	echo 0x02 > bDeviceSubClass
@@ -369,8 +368,17 @@ case "$1" in
 
 	echo "Creating Config"
 	mkdir configs/c.1
-	echo $MAXPOWERMW > configs/c.1/MaxPower
+	#mkdir configs/c.2
+	#mkdir configs/c.3
 	mkdir configs/c.1/strings/0x409
+	#mkdir configs/c.2/strings/0x409
+	#mkdir configs/c.3/strings/0x409
+	echo $MAXPOWERMW > configs/c.1/MaxPower
+	#echo $MAXPOWERMW > configs/c.2/MaxPower
+	#echo $MAXPOWERMW > configs/c.3/MaxPower
+	echo $CONFIGURATION > configs/c.1/strings/0x409/configuration
+	#echo $CONFIGURATION > configs/c.2/strings/0x409/configuration
+	#echo $CONFIGURATION > configs/c.3/strings/0x409/configuration
 
 	echo "Creating functions..."
 	#create_msd configs/c.1 mass_storage.0 $USBFILE
@@ -380,7 +388,7 @@ case "$1" in
 	#create_ecm configs/c.1 ecm.usb0
 	create_uac2 configs/c.1 uac2.usb0 "ASSound0" "ASSound0" "ASSound0" 27
 	create_uac2 configs/c.1 uac2.usb1 "ASSound1" "ASSound1" "ASSound1" 27
-	create_midi configs/c.1 midi.usb0 "Pi_MIDI" "Pi MIDI" 16 16
+	create_midi configs/c.1 midi.usb2 "Pi_MIDI" "Pi MIDI" 1 1
 	echo "OK"
 
 	echo "Binding USB Device Controller"
@@ -395,7 +403,7 @@ case "$1" in
 
 	set +e # Ignore all errors here on a best effort
 
-	cd $GADGET/g1
+	cd $GADGET/g_multi.0
 
 	if [ $? -ne 0 ]; then
 	    echo "Error: no configfs gadget found"
@@ -413,9 +421,7 @@ case "$1" in
 	#delete_ecm configs/c.1 ecm.usb0
 	delete_uac2 configs/c.1 uac2.usb0
 	delete_uac2 configs/c.1 uac2.usb1
-	#delete_uac2 configs/c.1 uac2.usb2
-	#delete_uac2 configs/c.1 uac2.usb3
-	delete_midi configs/c.1 midi.usb0
+	delete_midi configs/c.1 midi.usb2
 
 	echo "Clearing English strings"
 	rmdir strings/0x409
@@ -424,16 +430,20 @@ case "$1" in
 	echo "Cleaning up configuration"
 	rmdir configs/c.1/strings/0x409
 	rmdir configs/c.1
+	rmdir configs/c.2/strings/0x409
+	rmdir configs/c.2
+	rmdir configs/c.3/strings/0x409
+	rmdir configs/c.3
 	echo "OK"
 
 	echo "Removing gadget directory"
 	cd $GADGET
-	rmdir g1
+	rmdir g_multi.0
 	cd /
 	echo "OK"
 
 	#echo "Disable composite USB gadgets"
-	#modprobe -r libcomposite
+	modprobe -r libcomposite
 	#echo "OK"
 	;;
     *)
